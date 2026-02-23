@@ -1,4 +1,4 @@
-name: CI/CD to AWS EKS
+name: CI/CD to AWS EKS on Tag Push
 
 on:
   push:
@@ -8,18 +8,9 @@ on:
       - 'v*'
 
 jobs:
-  build-and-deploy: # Disatukan agar variabel tidak hilang
-    name: Build, Push ECR, and Deploy to EKS
+  build:
+    name: Build and Push to ECR
     runs-on: ubuntu-latest
-    
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
-      # Menggunakan ref_name agar fleksibel (bisa nama branch atau tag)
-      IMAGE_TAG: ${{ github.ref_name }} 
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -29,8 +20,8 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Wajib untuk AWS Academy
-          aws-region: ${{ env.AWS_REGION }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -38,26 +29,65 @@ jobs:
 
       - name: Build, Tag, and Push Docker Image
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          IMAGE="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${GITHUB_REF_NAME}"
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+  setup:
+    needs: build
+    name: Configure kubeconfig for EKS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup kubeconfig
         run: |
-          aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+          aws eks update-kubeconfig --name ${{ secrets.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to EKS
-        env:
-          # Pastikan semua variabel ini ada di GitHub Secrets
-          API_GATEWAY_URL: ${{ secrets.API_GATEWAY_URL }}
-          SNS_TOPIC_ARN: ${{ secrets.SNS_TOPIC_ARN }}
-          ATHENA_SCHEMA_NAME: ${{ secrets.ATHENA_SCHEMA_NAME }}
-          S3_STAGING_DIR: ${{ secrets.S3_STAGING_DIR }}
-        run: |
-          # envsubst berfungsi mengganti $VARIABEL di file yaml dengan nilai asli
-          envsubst < kubernetes/deploy.yaml | kubectl apply -f -
-          kubectl apply -f kubernetes/service.yaml
+  deploy:
+    needs: setup
+    name: Deploy to EKS
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+      ATHENA_DB: ${{ secrets.ATHENA_DB }}
+      API_GATEWAY_URL: ${{ secrets.API_GATEWAY_URL }}
+      SNS_TOPIC_ARN: ${{ secrets.SNS_TOPIC_ARN }}
+      ATHENA_SCHEMA_NAME: ${{ secrets.ATHENA_SCHEMA_NAME }}
+      S3_STAGING_DIR: ${{ secrets.S3_STAGING_DIR }}
+      
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Verify Deployment
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup kubeconfig
         run: |
-          kubectl get pods -l app=techno-apps
-          kubectl get service techno-lb
+          aws eks update-kubeconfig --name ${{ secrets.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Update kubernetes deployment config
+        run: |
+          envsubst < ./deploy/deploy.yaml > ./deploy_new.yaml && mv deploy_new.yaml ./deploy/deploy.yaml
+
+      - name: Deploy new version to EKS
+        run: |
+          kubectl apply -f ./deploy
