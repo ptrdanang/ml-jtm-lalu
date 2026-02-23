@@ -2,18 +2,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: techno-deployment
-  labels:
-    app: techno-apps
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: techno-apps
-  template:
-    metadata:
-      labels:
+  template:         # <--- WAJIB ADA
+    metadata:       # <--- WAJIB ADA
+      labels:       # <--- WAJIB ADA
         app: techno-apps
-    spec:
+    spec:           # <--- Harus menjorok ke dalam
       containers:
         - name: techno-apps
           image: "$ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_TAG"
@@ -32,8 +30,6 @@ spec:
               value: "$API_GATEWAY_URL"
             - name: SNS_TOPIC_ARN
               value: "$SNS_TOPIC_ARN"
-            - name: FLASK_SECRET_KEY
-              value: "lks"
             - name: S3_STAGING_DIR
               value: "$S3_STAGING_DIR"
             - name: ATHENA_DB
