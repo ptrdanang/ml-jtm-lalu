@@ -42,26 +42,6 @@ resource "aws_subnet" "public_2" {
 	}, local.commonTags)
 }
 
-resource "aws_subnet" "private_1" {
-	vpc_id = aws_vpc.vpc.id
-	cidr_block = "25.1.1.0/24"
-	availability_zone = "${var.region}a"
-	map_public_ip_on_launch = true
-	tags = merge({
-		Name = "${var.prefix}-private-1a"
-	}, local.commonTags)
-}
-
-resource "aws_subnet" "private_2" {
-	vpc_id = aws_vpc.vpc.id
-	cidr_block = "25.1.3.0/24"
-	availability_zone = "${var.region}b"
-	map_public_ip_on_launch = true
-	tags = merge({
-		Name = "${var.prefix}-private-1b"
-	}, local.commonTags)
-}
-
 resource "aws_eip" "nat_eip" {
 	tags = merge({
 		Name = "${var.prefix}-eip"
@@ -73,6 +53,26 @@ resource "aws_nat_gateway" "natgw" {
 	subnet_id = aws_subnet.public_1.id
 	tags = merge({
 		Name = "${var.prefix}-nat"
+	}, local.commonTags)
+}
+
+resource "aws_subnet" "private_1" {
+	vpc_id = aws_vpc.vpc.id
+	cidr_block = "25.1.1.0/24"
+	availability_zone = "${var.region}a"
+	map_public_ip_on_launch = false
+	tags = merge({
+		Name = "${var.prefix}-private-1a"
+	}, local.commonTags)
+}
+
+resource "aws_subnet" "private_2" {
+	vpc_id = aws_vpc.vpc.id
+	cidr_block = "25.1.3.0/24"
+	availability_zone = "${var.region}b"
+	map_public_ip_on_launch = false
+	tags = merge({
+		Name = "${var.prefix}-private-1b"
 	}, local.commonTags)
 }
 
@@ -116,7 +116,6 @@ resource "aws_route_table_association" "public_1" {
 	subnet_id = aws_subnet.public_1.id
 	route_table_id = aws_route_table.public.id
 }
-
 
 resource "aws_route_table_association" "public_2" {
 	subnet_id = aws_subnet.public_2.id

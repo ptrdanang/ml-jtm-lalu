@@ -15,20 +15,20 @@ variable "environment" {
 
 variable "name" {
 	type = string
-	default = "raihan"
+	default = "walidi-danang"
 }
 
 variable "city" {
 	type = string
-	default = "jakartapusat"
+	default = "blitar"
 }
 
 variable "labRoleARN" {
 	type = string
-	default = "arn:aws:iam::523842163503:role/LabRole"
+	default = "arn:aws:iam::471112773328:role/LabRole"
 }
 
 variable "adminEmail" {
 	type = string
-	default = "handi@seamolec.org"
+	default = "walididanang463@gmail.com"
 }

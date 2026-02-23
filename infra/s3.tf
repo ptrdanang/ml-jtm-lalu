@@ -99,3 +99,14 @@ resource "aws_s3_bucket_lifecycle_configuration" "output" {
 		}
 	}
 }
+
+resource "aws_s3_bucket_notification" "input_notification" {
+  bucket = aws_s3_bucket.input.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.s3.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3_to_call_lambda]
+}
