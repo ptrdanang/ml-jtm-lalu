@@ -3,12 +3,16 @@ kind: Deployment
 metadata:
   name: Techno-Deployment
   labels:
-      app: techno-apps
+    app: techno-apps
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: techno-apps
+  template:
+    metadata:
+      labels:
+        app: techno-apps
     spec:
       containers:
         - name: techno-apps
