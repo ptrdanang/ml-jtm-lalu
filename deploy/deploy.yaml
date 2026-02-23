@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: techno-apps
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_TAG
+          image: $ECR_REPOSITORY:$BUILD_TAG
           ports:
             - containerPort: 2000
           env:
