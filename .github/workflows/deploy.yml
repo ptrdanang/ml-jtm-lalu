@@ -64,6 +64,7 @@ jobs:
       SNS_TOPIC_ARN: ${{ secrets.SNS_TOPIC_ARN }}
       ATHENA_SCHEMA_NAME: ${{ secrets.ATHENA_DB }}
       S3_STAGING_DIR: ${{ secrets.S3_STAGING_DIR }}
+      
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
