@@ -1,38 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: Techno-Deployment
-  labels:
-      app: techno-apps
+  name: techno-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: techno-apps
+  template:
+    metadata:
+      labels:
+        app: techno-apps
     spec:
       containers:
         - name: techno-apps
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_TAG
+          image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
           ports:
             - containerPort: 2000
           env:
-            - name: AWS_ACCESS_KEY_ID
-              value: $AWS_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              value: $AWS_SECRET_ACCESS_KEY
-            - name: AWS_SESSION_TOKEN
-              value: $AWS_SESSION_TOKEN
             - name: AWS_REGION
-              value: $AWS_REGION
+              value: "${AWS_REGION}"
             - name: API_GATEWAY_URL
-              value: $API_GATEWAY_URL
+              value: "${API_GATEWAY_URL}"
             - name: SNS_TOPIC_ARN
-              value: $SNS_TOPIC_ARN
-            - name: FLASK_SECRET_KEY
-              value: lks
-            - name: S3_STAGING_DIR
-              value: $S3_STAGING_DIR
+              value: "${SNS_TOPIC_ARN}"
             - name: ATHENA_DB
-              value: rekognition_results_db
+              value: "rekognition_results_db"
             - name: ATHENA_SCHEMA_NAME
-              value: $ATHENA_SCHEMA_NAME
+              value: "${ATHENA_SCHEMA_NAME}"
+            - name: S3_STAGING_DIR
+              value: "${S3_STAGING_DIR}"
