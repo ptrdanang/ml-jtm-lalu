@@ -25,7 +25,7 @@ variable "city" {
 
 variable "labRoleARN" {
 	type = string
-	default = "arn:aws:iam::471112773328:role/LabRole"
+	default = "arn:aws:iam::975050048219:role/LabRole"
 }
 
 variable "adminEmail" {
