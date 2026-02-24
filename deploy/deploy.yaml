@@ -7,11 +7,11 @@ spec:
   selector:
     matchLabels:
       app: techno-apps
-  template:         # <--- WAJIB ADA
-    metadata:       # <--- WAJIB ADA
-      labels:       # <--- WAJIB ADA
+  template:
+    metadata:
+      labels:
         app: techno-apps
-    spec:           # <--- Harus menjorok ke dalam
+    spec:
       containers:
         - name: techno-apps
           image: "$ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_TAG"
